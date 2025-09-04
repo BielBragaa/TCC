@@ -1,70 +1,44 @@
-// frontend/src/pages/Dashboard.jsx
-import React, { useEffect, useState } from "react";
-import api from "../api/api";
+import React, { useContext } from "react";
+import Navbar from "../components/Navbar";
+import { RegistrosContext } from "../contexts/RegistrosContext";
 
 const Dashboard = () => {
-  const [dados, setDados] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { registros, veiculos } = useContext(RegistrosContext);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get("/api/dashboard/");
-        setDados(res.data);
-      } catch (err) {
-        console.error("Erro ao carregar dashboard:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const totalGanho = registros.reduce((acc, r) => {
+    if (r.tipo_rendimento === "unitario") return acc + (r.valor_unitario || 0) * (r.pacotes_entregues || 0);
+    if (r.tipo_rendimento === "diaria") return acc + (r.valor_diaria || 0);
+    return acc;
+  }, 0);
 
-  if (loading) return <p>Carregando...</p>;
-  if (!dados) return <p>Erro ao carregar dados.</p>;
+  const totalDespesa = registros.reduce((acc, r) => acc + (r.valor_despesa || 0), 0);
+  const lucro = totalGanho - totalDespesa;
 
   return (
     <div style={{ padding: "20px" }}>
+      <Navbar />
       <h1>Dashboard</h1>
-
       <h2>Resumo Rápido</h2>
       <ul>
-        <li>Total de Veículos Cadastrados: {dados.total_veiculos}</li>
-        <li>Total de Ganhos (últimos 7 dias): R$ {dados.total_ganho}</li>
-        <li>Total de Despesas (últimos 7 dias): R$ {dados.total_despesa}</li>
-        <li><strong>Lucro (últimos 7 dias): R$ {dados.lucro}</strong></li>
+        <li>Total de Veículos Cadastrados: {veiculos.length}</li>
+        <li>Total de Ganhos: R$ {totalGanho}</li>
+        <li>Total de Despesas: R$ {totalDespesa}</li>
+        <li><strong>Lucro: R$ {lucro}</strong></li>
       </ul>
 
       <hr />
-
       <h2>Últimos Registros</h2>
-      {dados.ultimos_registros.length > 0 ? (
-        <table border="1">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Ganho</th>
-              <th>Despesa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dados.ultimos_registros.map((registro, idx) => (
-              <tr key={idx}>
-                <td>{registro.data}</td>
-                <td>R$ {registro.ganho}</td>
-                <td>R$ {registro.despesa}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>Nenhum registro encontrado nos últimos dias.</p>
-      )}
-
-      <hr />
-      <p>
-        <a href="/relatorios">Ver relatório detalhado</a>
-      </p>
+      <ul>
+        {registros.length > 0 ? (
+          registros.map((r, i) => (
+            <li key={i}>
+              Tipo: {r.tipo_rendimento}, Pacotes: {r.total_pacotes}, Entregues: {r.pacotes_entregues}, Não Entregues: {r.pacotes_nao_entregues}, Despesa: {r.valor_despesa}, Ganho: {(r.tipo_rendimento === "unitario" ? r.valor_unitario * r.pacotes_entregues : r.valor_diaria) || 0}
+            </li>
+          ))
+        ) : (
+          <li>Nenhum registro ainda.</li>
+        )}
+      </ul>
     </div>
   );
 };
