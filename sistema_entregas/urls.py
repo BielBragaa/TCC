@@ -25,6 +25,7 @@ urlpatterns = [
     path('cadastro-veiculo/', include('cadastro_veiculo.urls')),
     path('registro/', include('registro_entregadespesa.urls')),  # Entregas e despesas juntos
     path('comunidade/', include('comunidade.urls')),
+    
 ]
 
 if settings.DEBUG:
